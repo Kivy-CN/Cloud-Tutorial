@@ -147,7 +147,9 @@ qemu-system-x86_64 -hda /path/to/your/image/file
 默认用户名和密码都是hadoop，解压缩后文件夹应该如下图所示：
 ![](./images/qemu_folder.png)
 
-双击`run_ubuntu_arm64_tiny.bat`运行命令行版本，双击`run_ubuntu_arm64.bat`运行图形界面版本。
+从终端进入到解压缩出来的路径：
+`cat run_ubuntu_arm64_tiny.bat`，然后复制文件内容来运行命令行版本；
+`cat run_ubuntu_arm64.bat`，然后复制文件内容来运行图形界面版本。
 
 
 #### 1.3.4 虚拟化工具
