@@ -34,6 +34,10 @@
 
 ### 1.3 虚拟化类型和工具软件
 
+#### 1.3.1 虚拟化类型
+
+虚拟化技术可以分为以下几种类型：
+
 1. **操作系统级别虚拟化（OS-level virtualization）**：在这种类型的虚拟化中，宿主机的操作系统允许多个隔离的用户空间实例，这些实例通常被称为“容器”。每个容器都运行在自己的用户空间中，但共享同一个内核。Docker就是这种虚拟化技术的一个例子。
 
 2. **全虚拟化（Full virtualization）**：全虚拟化使用一个虚拟机监视器（Hypervisor）来模拟底层硬件。这使得可以在一个物理机器上运行多个不同的操作系统。每个操作系统都认为自己是唯一控制硬件的系统。VMware和VirtualBox都是全虚拟化的例子。
@@ -42,72 +46,96 @@
 
 4. **混合虚拟化（Hybrid-Para virtualization）**：这是全虚拟化和类虚拟化的混合。允许虚拟机无需修改就能运行，同时也允许虚拟机知道自己在虚拟环境中运行，以提高性能。KVM就是混合虚拟化的一个例子。
 
-#### 1.3.1 QEMU
+#### 1.3.2 虚拟化工具软件
 
-QEMU（Quick Emulator）是一种特殊的虚拟化类型，结合了全虚拟化和硬件辅助虚拟化的特点。
+常用的虚拟化相关的工具大概有如下这些：
 
-有许多网站提供预构建的镜像文件，可以直接下载并使用。可以从Linux发行版的官方网站下载ISO文件，或者从网站如[OSBoxes](https://www.osboxes.org/)或[Vagrant Boxes](https://app.vagrantup.com/boxes/search)下载预构建的虚拟机镜像。
+1. **VMware Workstation/Player**：这些是由VMware公司开发的商业虚拟化软件。VMware Workstation提供了全面的虚拟化解决方案，包括服务器虚拟化、桌面虚拟化和网络虚拟化等。VMware Player是一个更简单的版本。优势在于功能全面，性能优秀，支持广泛的操作系统，且有强大的管理和安全功能。劣势在于商用需要购买许可证，成本较高。
 
-也可以使用QEMU自带的工具来创建一个新的镜像文件。例如，可以使用`qemu-img`命令来创建一个新的空白镜像：
+2. **Oracle VM VirtualBox**：这是Oracle公司收购的一款开源虚拟化软件。优势在于免费，支持多种操作系统，易于使用，且功能丰富，尤其是具有很方便的虚拟网络管理功能。劣势在于性能相比VMware等商业产品稍逊一筹。
 
-```bash
-qemu-img create -f qcow2 /path/to/your/image/file 10G
-```
+3. **Microsoft Hyper-V**：这是Microsoft的虚拟化解决方案，内置于Windows Server和部分Windows版本中。优势在于与Windows系统的深度集成，管理方便，且性能优秀。劣势在于只能在Windows系统上运行，对其他操作系统的支持不如VMware和VirtualBox。
 
-这个命令会创建一个10GB的空白镜像文件，可以在这个镜像上安装操作系统。如果已经有一个虚拟机，可以使用工具如`virt-v2v`来将它转换为QEMU可以使用的镜像文件。需要根据具体需求来选择最适合方法。
+4. **Kernel-based Virtual Machine (KVM)**：KVM是Linux内核的一部分，提供了基于硬件的虚拟化解决方案。优势在于性能优秀，与Linux系统的深度集成，且开源免费。劣势在于需要处理器支持硬件虚拟化（如Intel VT或AMD-V），且使用和管理相对复杂。
+
+5. **Quick Emulator (QEMU)**：QEMU是一个开源的处理器模拟器和虚拟化器，可以在没有硬件虚拟化支持的系统上提供全系统模拟。优势在于兼容性好，可以模拟多种硬件和处理器，且开源免费。劣势在于性能相比硬件虚拟化的解决方案较差。
+
+6. **libvirt**：libvirt是一个开源的用于管理平台虚拟化技术的API、守护进程和管理工具的集合。可以用于管理KVM，Xen，VMware ESXi，QEMU等。libvirt提供了一个统一的接口，使得管理不同的虚拟化技术变得更加简单。
+
+7. **Xen Project**：Xen是一种开源的虚拟机监视器，提供了全面的虚拟化解决方案。优势在于性能优秀，支持多种虚拟化模式，且开源免费。劣势在于需要处理器支持硬件虚拟化，且对于非专业用户来说，使用和管理相对复杂。
+
+本文推荐的工具软件是VirtualBox和QEMU。
+VirtualBox是一种同架构虚拟化软件，可以虚拟出多个与宿主机同样硬件架构的虚拟机。QEMU是一种跨架构的虚拟化软件，可以虚拟出多个与宿主机不同硬件架构的虚拟机。
+
+VirtualBox等软件都可以在一台物理机器上创建多个虚拟机，每个虚拟机可以运行不同的操作系统。每个虚拟机都可以分配不同的处理器和内存资源，以满足不同的需求。就像是一台一台单独的电脑一样。这些虚拟机都是与宿主机相同的硬件架构，比如宿主机是amd64（x86_64），那么虚拟机也可以是amd64（x86_64，64位），也可以是x86（32位）。如果宿主机是x86（32位），那么虚拟机就只能是x86（32位）的了。
+
+QEMU（Quick Emulator）是一种特殊的虚拟化类型，可以在一台物理机器上创建多个虚拟机，但这些虚拟机可以与宿主机同架构，也可以不同架构。当架构相同的时候，可以将QEMU看作是虚拟机；当架构不同的时候，可以兼顾QEMU看作是模拟器。比如宿主机是amd64（x86_64），那么虚拟机也可以是amd64（x86_64，64位），也可以是x86（32位），还可以模拟出aarch64（arm64）、arm（32位）、mips等等架构。
+
+#### 1.3.3 QEMU
 
 在没有硬件辅助的情况下，QEMU可以进行全虚拟化（Full Virtualization），通过二进制翻译来模拟整个硬件环境，使得在一个物理机器上可以运行多个不同的操作系统。
 
-```Bash
-qemu-system-arm -M virt -m 1024 -cpu cortex-a57 -smp 4 -bios QEMU_EFI.fd -device VGA -device nec-usb-xhci -device usb-kbd -device usb-mouse -drive if=none,id=hd0,file=/path/to/your/windows11/arm/image -device virtio-blk-device,drive=hd0 -boot d -cdrom /path/to/your/windows11/arm/iso
-```
+QEMU原生只有字符界面，但本文所用的命令和文件都是现成的 ，而且大家可以使用AI联网来检索具体配置参数的意义和效果等等，所以完全不用怕。
 
-如果有一个vhd（Hyper-V虚拟硬盘）格式的镜像文件，可以直接在QEMU中使用。
-在启动QEMU时指定这个vhd文件作为硬盘即可。
+下载安装QEMU需要访问[官方网站](https://www.qemu.org/download/)。
 
-以下是一个示例命令，它启动一个x86_64架构的虚拟机，并加载一个vhd文件：
+本文也提供了一份适用于Windows系统的绿色版本QEMU9.0，[下载链接](https://pan.baidu.com/s/1SAOppNwQMnM8Pg1Ybi-p6w?pwd=wy0d) , 提取码：`wy0d` 。
 
-```bash
-qemu-system-x86_64 -hda /path/to/your/vhd/file
-```
+不过下载安装之后倒未必能够直接使用，因为现在的操作系统往往需要efi分区等等要素。
 
-请将`/path/to/your/vhd/file`替换为的vhd文件的实际路径。
+那本文这里也提供了一份能够很好地支持上述版本QEMU的`efi.img`文件，[下载链接](https://pan.baidu.com/s/1HlYjcwpowzVNmzpjMXZ6BA?pwd=olfy) , 提取码：`olfy` 。
 
-如果想在ARM架构的虚拟机上使用这个vhd文件，可以使用类似的命令，只是需要将`qemu-system-x86_64`替换为`qemu-system-arm`（32位）或者`qemu-system-aarch64`（64位），并添加适当的CPU和机器模型参数。
+这个`efi.img`文件可以用于启动QEMU，也可以用于启动QEMU创建的虚拟机。
 
-如果想做更多定制，就需要更复杂的命令了。
+有了QEMU软件，也有了`efi.img`文件，就可以创建虚拟机了。
 
-例如下面的例子中，已经有下载好的`ubuntu-24.04-live-server-arm64.iso`这个操作系统安装镜像，还有一个本项目提供好的`efi.img`文件。
-接下来就可以创建一个img文件，然后再安装对应的操作系统到新建的img文件里。
+首先使用QEMU自带的使用`qemu-img`命令来创建新的空白镜像：
 
 ```bash
-# 创建系统盘
+# 创建压缩的qcow格式
+qemu-img create -f qcow2 ubuntu-arm64.qcow2 120G
+# 创建通用的img格式
 qemu-img create ubuntu-arm64.img 120G
-
-# 运行系统盘来安装
-## Ubuntu Arm 64
-qemu-system-aarch64 -M virt,virtualization=true -m 8G -cpu max,pauth-impdef=on -smp 8 -drive if=pflash,format=raw,file=efi.img,readonly=on  --accel tcg,thread=multi -device ramfb -device qemu-xhci -device usb-kbd -device usb-tablet -nic user,model=virtio-net-pci -device usb-storage,drive=install -drive if=none,id=install,format=raw,media=cdrom,file=./ubuntu-24.04-live-server-arm64.iso -drive if=virtio,id=system,format=raw,file=./ubuntu-arm64.img
-
-
-# 运行已经安装好的
-## Ubuntu Arm 64
-qemu-system-aarch64 -M virt,virtualization=true -m 8G -cpu max,pauth-impdef=on -smp 8 -drive if=pflash,format=raw,file=efi.img,readonly=on  --accel tcg,thread=multi -device ramfb -device qemu-xhci -device usb-kbd -device usb-tablet -nic user,model=virtio-net-pci -drive if=virtio,id=system,format=raw,file=./ubuntu-arm64.img
 ```
 
-要将vhd等文件转换为QEMU更熟悉的格式，如raw或qcow2。可以使用`qemu-img`命令来进行转换：
+上述命令会创建一个120GB的空白镜像文件，可以在这个镜像上安装操作系统。
+如果有vhd或者img之类的其他格式的虚拟硬盘，QEMU可以直接使用，也可以转换成为qcow2。
+可以使用`qemu-img`命令来进行转换：
 
 ```bash
 qemu-img convert -f vhd -O qcow2 /path/to/your/vhd/file /path/to/your/qcow2/file
 qemu-img convert -O qcow2 -c ubuntu-arm64.img ubuntu-arm64-compressed.qcow2
-
-# 然后就可以运行了
-qemu-system-aarch64 -M virt,virtualization=true -m 8G -cpu max,pauth-impdef=on -smp 8 -drive if=pflash,format=raw,file=efi.img,readonly=on  --accel tcg,thread=multi -device ramfb -device qemu-xhci -device usb-kbd -device usb-tablet -nic user,model=virtio-net-pci -drive if=virtio,id=system,format=qcow2,file=ubuntu-arm64.qcow2
-
-
-qemu-system-aarch64 -M virt,virtualization=true -m 8G -cpu max,pauth-impdef=on -smp 8 -drive if=pflash,format=raw,file=efi.img,readonly=on  --accel tcg,thread=multi -device ramfb -device qemu-xhci -device usb-kbd -device usb-tablet -nic user,model=virtio-net-pci -drive if=virtio,id=system,format=qcow2,file=ubuntu-arm64-tiny.qcow2
 ```
 
-当硬件辅助虚拟化（如Intel的VT-x或AMD的AMD-V）可用时，QEMU可以利用这些特性来提高虚拟化的性能，这种情况下，QEMU的行为更接近于混合虚拟化（Hybrid-Para Virtualization）。
+
+QEMU自带了包括`qemu-system-x86_64`、`qemu-system-arm`（32位）和`qemu-system-aarch64`（64位）等很多个命令，都是对应各自的虚拟架构的。在使用这些命令创建和运行虚拟机的时候，还需要添加适当的CPU和机器模型参数，以及网卡显卡设置等等信息。
+
+例如下面的例子中，已经有从[Ubuntu官网](https://ubuntu.com/download/server/arm)下载好的`ubuntu-24.04-live-server-arm64.iso`这个操作系统安装镜像，还有一个本项目提供好的`efi.img`以及上面创建好的`ubuntu-arm64.img`文件。
+
+下面的命令就是将操作系统安装到对应的虚拟磁盘：
+
+```bash
+# 运行系统盘来安装
+# Ubuntu Arm 64
+qemu-system-aarch64 -M virt,virtualization=true -m 8G -cpu max,pauth-impdef=on -smp 8 -drive if=pflash,format=raw,file=efi.img,readonly=on  --accel tcg,thread=multi -device ramfb -device qemu-xhci -device usb-kbd -device usb-tablet -nic user,model=virtio-net-pci -device usb-storage,drive=install -drive if=none,id=install,format=raw,media=cdrom,file=./ubuntu-24.04-live-server-arm64.iso -drive if=virtio,id=system,format=raw,file=./ubuntu-arm64.img
+```
+
+安装完成之后，去掉对应ISO的`-drive`参数，就可以启动系统了：
+
+```bash
+# 运行已经安装好的
+# Ubuntu Arm 64， 使用img
+qemu-system-aarch64 -M virt,virtualization=true -m 8G -cpu max,pauth-impdef=on -smp 8 -drive if=pflash,format=raw,file=efi.img,readonly=on  --accel tcg,thread=multi -device ramfb -device qemu-xhci -device usb-kbd -device usb-tablet -nic user,model=virtio-net-pci -drive if=virtio,id=system,format=raw,file=./ubuntu-arm64.img
+```
+
+如果你用的不是img文件，而是qcow2文件，把命令改成这样就可以了：
+
+```bash
+# Ubuntu Arm 64，使用qcow2
+qemu-system-aarch64 -M virt,virtualization=true -m 8G -cpu max,pauth-impdef=on -smp 8 -drive if=pflash,format=raw,file=efi.img,readonly=on  --accel tcg,thread=multi -device ramfb -device qemu-xhci -device usb-kbd -device usb-tablet -nic user,model=virtio-net-pci -drive if=virtio,id=system,format=qcow2,file=ubuntu-arm64.qcow2
+```
+
+如果要运行和宿主机同架构的虚拟机，那就可以借助硬件辅助虚拟化（如Intel的VT-x或AMD的AMD-V）。使得QEMU可以利用这些特性来提高虚拟化的性能，这种情况下，QEMU的行为更接近于混合虚拟化（Hybrid-Para Virtualization）。
 
 ```Bash
 qemu-system-x86_64 -hda /path/to/your/image/file
@@ -121,24 +149,15 @@ qemu-system-x86_64 -hda /path/to/your/image/file
 
 双击`run_ubuntu_arm64_tiny.bat`运行命令行版本，双击`run_ubuntu_arm64.bat`运行图形界面版本。
 
-#### 1.3.2 虚拟化工具
 
-常用的虚拟化工具如下：
+#### 1.3.4 虚拟化工具
 
-1. **VMware Workstation/Player**：这些是由VMware公司开发的商业虚拟化软件。VMware Workstation提供了全面的虚拟化解决方案，包括服务器虚拟化、桌面虚拟化和网络虚拟化等。VMware Player是一个更简单的版本。优势在于功能全面，性能优秀，支持广泛的操作系统，且有强大的管理和安全功能。劣势在于商用需要购买许可证，成本较高。
 
-2. **Oracle VM VirtualBox**：这是Oracle公司收购的一款开源虚拟化软件。优势在于免费，支持多种操作系统，易于使用，且功能丰富，尤其是具有很方便的虚拟网络管理功能。劣势在于性能相比VMware等商业产品稍逊一筹。
 
-3. **Microsoft Hyper-V**：这是Microsoft的虚拟化解决方案，内置于Windows Server和部分Windows版本中。优势在于与Windows系统的深度集成，管理方便，且性能优秀。劣势在于只能在Windows系统上运行，对其他操作系统的支持不如VMware和VirtualBox。
 
-4. **Kernel-based Virtual Machine (KVM)**：KVM是Linux内核的一部分，提供了基于硬件的虚拟化解决方案。优势在于性能优秀，与Linux系统的深度集成，且开源免费。劣势在于需要处理器支持硬件虚拟化（如Intel VT或AMD-V），且使用和管理相对复杂。
 
-5. **Quick Emulator (QEMU)**：QEMU是一个开源的处理器模拟器和虚拟化器，可以在没有硬件虚拟化支持的系统上提供全系统模拟。优势在于兼容性好，可以模拟多种硬件和处理器，且开源免费。劣势在于性能相比硬件虚拟化的解决方案较差。
 
-6. **Xen Project**：Xen是一种开源的虚拟机监视器，提供了全面的虚拟化解决方案。优势在于性能优秀，支持多种虚拟化模式，且开源免费。劣势在于需要处理器支持硬件虚拟化，且对于非专业用户来说，使用和管理相对复杂。
-
-7. **libvirt**：libvirt是一个开源的用于管理平台虚拟化技术的API、守护进程和管理工具的集合。可以用于管理KVM，Xen，VMware ESXi，QEMU等。libvirt提供了一个统一的接口，使得管理不同的虚拟化技术变得更加简单。
-
+有许多网站提供预构建的镜像文件，可以直接下载并使用。可以从Linux发行版的官方网站下载ISO文件，或者从网站如[OSBoxes](https://www.osboxes.org/)或[Vagrant Boxes](https://app.vagrantup.com/boxes/search)下载预构建的虚拟机镜像。
 
 
 #### Ubuntu Server 22.04上安装QEMU和libvirt
