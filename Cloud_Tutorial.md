@@ -151,18 +151,7 @@ qemu-system-x86_64 -hda /path/to/your/image/file
 `cat run_ubuntu_arm64_tiny.bat`，然后复制文件内容来运行命令行版本；
 `cat run_ubuntu_arm64.bat`，然后复制文件内容来运行图形界面版本。
 
-
-#### 1.3.4 虚拟化工具
-
-
-
-
-
-
-有许多网站提供预构建的镜像文件，可以直接下载并使用。可以从Linux发行版的官方网站下载ISO文件，或者从网站如[OSBoxes](https://www.osboxes.org/)或[Vagrant Boxes](https://app.vagrantup.com/boxes/search)下载预构建的虚拟机镜像。
-
-
-#### Ubuntu Server 22.04上安装QEMU和libvirt
+#### 1.3.4 Ubuntu Server 上安装QEMU和libvirt
 
 使用以下命令来安装：
 
@@ -194,6 +183,10 @@ sudo systemctl enable cockpit
 最后，可以在浏览器中访问`https://<your-server-ip>:9090`来访问Cockpit。需要使用服务器的用户名和密码来登录。
 
 在Cockpit中，可以点击左侧的"Virtual Machines"选项来管理虚拟机。可以创建新的虚拟机，或者管理已经存在的虚拟机。
+
+#### 1.3.5 VirtualBox
+
+有许多网站提供预构建的镜像文件，可以直接下载并使用。可以从Linux发行版的官方网站下载ISO文件，或者从网站如[OSBoxes](https://www.osboxes.org/)或[Vagrant Boxes](https://app.vagrantup.com/boxes/search)下载预构建的虚拟机镜像。
 
 
 ### 1.4 虚拟化技术与大数据
