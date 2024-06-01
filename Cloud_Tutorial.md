@@ -42,9 +42,86 @@
 
 4. **混合虚拟化（Hybrid-Para virtualization）**：这是全虚拟化和类虚拟化的混合。允许虚拟机无需修改就能运行，同时也允许虚拟机知道自己在虚拟环境中运行，以提高性能。KVM就是混合虚拟化的一个例子。
 
+#### 1.3.1 QEMU
+
 QEMU（Quick Emulator）是一种特殊的虚拟化类型，结合了全虚拟化和硬件辅助虚拟化的特点。
+
+有许多网站提供预构建的镜像文件，可以直接下载并使用。可以从Linux发行版的官方网站下载ISO文件，或者从网站如[OSBoxes](https://www.osboxes.org/)或[Vagrant Boxes](https://app.vagrantup.com/boxes/search)下载预构建的虚拟机镜像。
+
+也可以使用QEMU自带的工具来创建一个新的镜像文件。例如，可以使用`qemu-img`命令来创建一个新的空白镜像：
+
+```bash
+qemu-img create -f qcow2 /path/to/your/image/file 10G
+```
+
+这个命令会创建一个10GB的空白镜像文件，可以在这个镜像上安装操作系统。如果已经有一个虚拟机，可以使用工具如`virt-v2v`来将它转换为QEMU可以使用的镜像文件。需要根据具体需求来选择最适合方法。
+
 在没有硬件辅助的情况下，QEMU可以进行全虚拟化（Full Virtualization），通过二进制翻译来模拟整个硬件环境，使得在一个物理机器上可以运行多个不同的操作系统。
+
+```Bash
+qemu-system-arm -M virt -m 1024 -cpu cortex-a57 -smp 4 -bios QEMU_EFI.fd -device VGA -device nec-usb-xhci -device usb-kbd -device usb-mouse -drive if=none,id=hd0,file=/path/to/your/windows11/arm/image -device virtio-blk-device,drive=hd0 -boot d -cdrom /path/to/your/windows11/arm/iso
+```
+
+如果有一个vhd（Hyper-V虚拟硬盘）格式的镜像文件，可以直接在QEMU中使用。
+在启动QEMU时指定这个vhd文件作为硬盘即可。
+
+以下是一个示例命令，它启动一个x86_64架构的虚拟机，并加载一个vhd文件：
+
+```bash
+qemu-system-x86_64 -hda /path/to/your/vhd/file
+```
+
+请将`/path/to/your/vhd/file`替换为的vhd文件的实际路径。
+
+如果想在ARM架构的虚拟机上使用这个vhd文件，可以使用类似的命令，只是需要将`qemu-system-x86_64`替换为`qemu-system-arm`（32位）或者`qemu-system-aarch64`（64位），并添加适当的CPU和机器模型参数。
+
+如果想做更多定制，就需要更复杂的命令了。
+
+例如下面的例子中，已经有下载好的`ubuntu-24.04-live-server-arm64.iso`这个操作系统安装镜像，还有一个本项目提供好的`efi.img`文件。
+接下来就可以创建一个img文件，然后再安装对应的操作系统到新建的img文件里。
+
+```bash
+# 创建系统盘
+qemu-img create ubuntu-arm64.img 120G
+
+# 运行系统盘来安装
+## Ubuntu Arm 64
+qemu-system-aarch64 -M virt,virtualization=true -m 8G -cpu max,pauth-impdef=on -smp 8 -drive if=pflash,format=raw,file=efi.img,readonly=on  --accel tcg,thread=multi -device ramfb -device qemu-xhci -device usb-kbd -device usb-tablet -nic user,model=virtio-net-pci -device usb-storage,drive=install -drive if=none,id=install,format=raw,media=cdrom,file=./ubuntu-24.04-live-server-arm64.iso -drive if=virtio,id=system,format=raw,file=./ubuntu-arm64.img
+
+
+# 运行已经安装好的
+## Ubuntu Arm 64
+qemu-system-aarch64 -M virt,virtualization=true -m 8G -cpu max,pauth-impdef=on -smp 8 -drive if=pflash,format=raw,file=efi.img,readonly=on  --accel tcg,thread=multi -device ramfb -device qemu-xhci -device usb-kbd -device usb-tablet -nic user,model=virtio-net-pci -drive if=virtio,id=system,format=raw,file=./ubuntu-arm64.img
+```
+
+要将vhd等文件转换为QEMU更熟悉的格式，如raw或qcow2。可以使用`qemu-img`命令来进行转换：
+
+```bash
+qemu-img convert -f vhd -O qcow2 /path/to/your/vhd/file /path/to/your/qcow2/file
+qemu-img convert -O qcow2 -c ubuntu-arm64.img ubuntu-arm64-compressed.qcow2
+
+# 然后就可以运行了
+qemu-system-aarch64 -M virt,virtualization=true -m 8G -cpu max,pauth-impdef=on -smp 8 -drive if=pflash,format=raw,file=efi.img,readonly=on  --accel tcg,thread=multi -device ramfb -device qemu-xhci -device usb-kbd -device usb-tablet -nic user,model=virtio-net-pci -drive if=virtio,id=system,format=qcow2,file=ubuntu-arm64.qcow2
+
+
+qemu-system-aarch64 -M virt,virtualization=true -m 8G -cpu max,pauth-impdef=on -smp 8 -drive if=pflash,format=raw,file=efi.img,readonly=on  --accel tcg,thread=multi -device ramfb -device qemu-xhci -device usb-kbd -device usb-tablet -nic user,model=virtio-net-pci -drive if=virtio,id=system,format=qcow2,file=ubuntu-arm64-tiny.qcow2
+```
+
 当硬件辅助虚拟化（如Intel的VT-x或AMD的AMD-V）可用时，QEMU可以利用这些特性来提高虚拟化的性能，这种情况下，QEMU的行为更接近于混合虚拟化（Hybrid-Para Virtualization）。
+
+```Bash
+qemu-system-x86_64 -hda /path/to/your/image/file
+```
+
+本文提供了一个集成了Ubuntu Server 24.04的ARM64镜像文件，可以直接使用。
+下载链接在：[https://pan.baidu.com/s/1L5frJxOW5k_Sy1PNBV_e7w?pwd=09e5](https://pan.baidu.com/s/1L5frJxOW5k_Sy1PNBV_e7w?pwd=09e5) 
+提取码：09e5 
+默认用户名和密码都是hadoop，解压缩后文件夹应该如下图所示：
+![](./images/qemu_folder.png)
+
+双击`run_ubuntu_arm64_tiny.bat`运行命令行版本，双击`run_ubuntu_arm64.bat`运行图形界面版本。
+
+#### 1.3.2 虚拟化工具
 
 常用的虚拟化工具如下：
 
@@ -122,9 +199,9 @@ sudo systemctl enable cockpit
 
 在Windows系统中，当Hyper-V被启用时，它会占用硬件虚拟化的资源，导致其他虚拟化软件（如VirtualBox）无法访问这些资源。
 
-想在VirtualBox中使用嵌套虚拟化，你需要先禁用Hyper-V，以便VirtualBox可以访问硬件虚拟化支持。然后，你可以在VirtualBox的虚拟机设置中启用嵌套虚拟化。
+想在VirtualBox中使用嵌套虚拟化，需要先禁用Hyper-V，以便VirtualBox可以访问硬件虚拟化支持。然后，可以在VirtualBox的虚拟机设置中启用嵌套虚拟化。
 
-请注意，禁用Hyper-V可能会影响到依赖Hyper-V的其他功能，如Windows Sandbox和WSL2。在禁用Hyper-V之前，你应该考虑这些影响，并确保你的系统有足够的资源来支持嵌套虚拟化。
+请注意，禁用Hyper-V可能会影响到依赖Hyper-V的其他功能，如Windows Sandbox和WSL2。在禁用Hyper-V之前，应该考虑这些影响，并确保系统有足够的资源来支持嵌套虚拟化。
 
 可以使用以下的PowerShell命令来禁用Hyper-V和Windows Hypervisor Platform（以管理员身份运行PowerShell）：
 
@@ -134,11 +211,11 @@ Disable-WindowsOptionalFeature -Online -FeatureName HypervisorPlatform
 bcdedit /set hypervisorlaunchtype off
 ```
 
-然后，你需要重启你的电脑以使更改生效。
+然后，需要重启电脑以使更改生效。
 
 请注意，禁用Hyper-V和Windows Hypervisor Platform可能会影响到依赖它们的其他功能，如Windows Sandbox和WSL2。
 
-如果你想要恢复上面禁用的Hyper-V和Windows Hypervisor Platform，你可以使用以下的PowerShell命令（以管理员身份运行PowerShell）：
+如果想要恢复上面禁用的Hyper-V和Windows Hypervisor Platform，可以使用以下的PowerShell命令（以管理员身份运行PowerShell）：
 
 ```powershell
 Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All
@@ -146,7 +223,7 @@ Enable-WindowsOptionalFeature -Online -FeatureName HypervisorPlatform
 bcdedit /set hypervisorlaunchtype auto
 ```
 
-然后，你需要重启你的电脑以使更改生效。
+然后，需要重启电脑以使更改生效。
 
 这些命令会重新启用Hyper-V和Windows Hypervisor Platform，允许它们再次访问硬件虚拟化的资源。
 注意，启用这些功能可能会影响到VirtualBox的嵌套虚拟化功能。
@@ -417,7 +494,7 @@ PVE可以作为构建超融合环境的一部分，与其他系统和软件一�
 egrep -c '(vmx|svm)' /proc/cpuinfo
 ```
 
-如果这个命令返回的结果大于0，那么你的系统支持虚拟化。如果返回的结果是0，那么嵌套虚拟化没有被正确地启用。
+如果这个命令返回的结果大于0，那么系统支持虚拟化。如果返回的结果是0，那么嵌套虚拟化没有被正确地启用。
 如果宿主机没有开启嵌套虚拟化支持，那么运行在VirtualBox里的PVE可以使用LXC，也可以通过 QEMU 而非 KVM 来运行和安装虚拟机。
 而且也可以尝试在虚拟机的配置文件中直接禁用KVM。
 
@@ -438,7 +515,7 @@ echo "kvm: no" >> /etc/pve/qemu-server/100.conf
 
 1. 打开Proxmox VE的管理界面。
 
-2. 在左侧的树形菜单中，找到并选择你想要修改的虚拟机。
+2. 在左侧的树形菜单中，找到并选择想要修改的虚拟机。
 
 3. 在右侧的选项卡中，选择“硬件”。
 
@@ -446,7 +523,7 @@ echo "kvm: no" >> /etc/pve/qemu-server/100.conf
 
 5. 在处理器的配置页面中，找到“类型”选项。将它的值改为“qemu64”或者其他不使用KVM的类型。
 
-6. 点击“确定”按钮来保存你的更改。
+6. 点击“确定”按钮来保存更改。
 
 现在，PVE 虚拟机应该不再使用KVM了。
 
@@ -461,9 +538,9 @@ qm stop 100
 qm destroy 100
 ```
 
-请将`100`替换为你想要删除的虚拟机的ID。`qm stop`命令会停止虚拟机，`qm destroy`命令会删除虚拟机。
+请将`100`替换为想要删除的虚拟机的ID。`qm stop`命令会停止虚拟机，`qm destroy`命令会删除虚拟机。
 
-请注意，这个操作是不可逆的，删除的虚拟机不能恢复。在删除虚拟机之前，你应该确保你已经保存了所有重要的数据。
+请注意，这个操作是不可逆的，删除的虚拟机不能恢复。在删除虚拟机之前，应该确保已经保存了所有重要的数据。
 
 
 
@@ -560,7 +637,7 @@ ZeroTier 客户端还支持在 Windows、macOS 和 Android 系统上运行，并
 
 4. **优化网络架构**：通过优化网络架构，例如使用更有效的路由策略，可以提高带宽的使用效率。
 
-5. **使用带宽管理工具**：有些工具可以帮助你监控和管理带宽的使用，从而更有效地利用带宽。
+5. **使用带宽管理工具**：有些工具可以帮助监控和管理带宽的使用，从而更有效地利用带宽。
 
 
 ## 4. 云服务搭建
