@@ -107,7 +107,6 @@ qemu-img convert -f vhd -O qcow2 /path/to/your/vhd/file /path/to/your/qcow2/file
 qemu-img convert -O qcow2 -c ubuntu-arm64.img ubuntu-arm64-compressed.qcow2
 ```
 
-
 QEMU自带了包括`qemu-system-x86_64`、`qemu-system-arm`（32位）和`qemu-system-aarch64`（64位）等很多个命令，都是对应各自的虚拟架构的。在使用这些命令创建和运行虚拟机的时候，还需要添加适当的CPU和机器模型参数，以及网卡显卡设置等等信息。
 
 例如下面的例子中，已经有从[Ubuntu官网](https://ubuntu.com/download/server/arm)下载好的`ubuntu-24.04-live-server-arm64.iso`这个操作系统安装镜像，还有一个本项目提供好的`efi.img`以及上面创建好的`ubuntu-arm64.img`文件。
@@ -153,6 +152,8 @@ qemu-system-x86_64 -hda /path/to/your/image/file
 
 #### 1.3.4 Ubuntu Server 上安装QEMU和libvirt
 
+上面的QEMU还是运行在Windows 11这种桌面操作系统上的，如果要在服务器上运行，就可以安装QEMU、kvm和libvirt来实现。
+
 使用以下命令来安装：
 
 ```bash
@@ -167,7 +168,11 @@ sudo adduser username libvirt
 sudo adduser username kvm
 ```
 
-接下来，需要安装Cockpit和Cockpit Machines。Cockpit是一个用于服务器管理的Web UI，Cockpit Machines是一个用于管理虚拟机的Cockpit插件。可以使用以下命令来安装：
+上面只是安装了基础组件，要在服务器上进行管理和配置，还需要弄从网络来访问和管理服务器上的虚拟机。
+
+因此，接下来，需要安装Cockpit和Cockpit Machines。
+
+Cockpit是一个用于服务器管理的Web UI，Cockpit Machines是一个用于管理虚拟机的Cockpit插件。可以使用以下命令来安装：
 
 ```bash
 sudo apt install cockpit cockpit-machines
