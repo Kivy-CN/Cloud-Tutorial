@@ -442,7 +442,7 @@ Kubernetes通过提供这些功能，使得在复杂的生产环境中运行容�
 
 ### 2.4 容器与编排系统在Ubuntu操作系统中的安装和使用
 
-#### Docker 安装
+#### 2.4.1 Docker 安装
 
 在Ubuntu Server 22.04上使用`apt`来安装Docker和Docker Compose的步骤：
 
@@ -486,6 +486,32 @@ docker-compose --version
 ```
 
 这个命令将会打印出Docker Compose的版本，如果能看到版本号，那么说明Docker Compose已经成功安装。
+
+#### 2.4.2 Docker 权限配置
+
+在Ubuntu 24.04下，如果你想让当前用户可以运行Docker而不需要使用`sudo`，你可以将当前用户添加到`docker`用户组。以下是具体步骤：
+
+1. 打开一个终端。
+
+2. 运行以下命令以创建`docker`组（如果它还不存在）并将当前用户添加到该组：
+
+```bash
+sudo groupadd docker
+sudo usermod -aG docker $USER
+```
+
+3. 重启你的电脑，或者注销并重新登录，以使这些更改生效。
+
+4. 为了验证更改是否生效，你可以运行以下命令，如果它能够无需`sudo`就能成功运行，那么就说明更改已经生效：
+
+```bash
+docker run hello-world
+```
+
+这个命令会尝试运行一个名为`hello-world`的Docker容器。如果一切正常，你应该能看到一些关于Docker的欢迎信息。
+
+请注意，将用户添加到`docker`组会赋予他们类似于`root`用户的权限，因为他们现在可以运行Docker容器。在某些情况下，这可能会带来安全风险，所以请确保你了解这些风险。
+
 
 #### k8s 安装
 
