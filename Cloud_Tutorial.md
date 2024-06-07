@@ -440,7 +440,7 @@ Kubernetes通过提供这些功能，使得在复杂的生产环境中运行容�
 
 3. **资源消耗**：Kubernetes本身会消耗一部分系统资源，对于小型的应用或者小型的集群，这部分资源消耗可能会比较明显。
 
-### 2.4 容器与编排系统在Ubuntu操作系统中的安装和使用
+### 2.4 容器与编排系统
 
 #### 2.4.1 Docker 安装
 
@@ -513,25 +513,24 @@ docker run hello-world
 
 请注意，将用户添加到`docker`组会赋予他们类似于`root`用户的权限，因为他们现在可以运行Docker容器。在某些情况下，这可能会带来安全风险，所以请确保了解这些风险。
 
-
 #### 2.4.3 Docker 运行容器
 
 在Ubuntu 24.04上，可以使用以下步骤从命令行创建一个Ubuntu 24.04的Docker容器，并使用宿主的NVIDIA GPU和CUDA：
 
-首先，需要安装NVIDIA的Docker工具，这个工具可以让Docker容器访问宿主机的NVIDIA GPU。在终端中运行以下命令：
+首先，宿主机端，需要安装NVIDIA的Docker工具，这个工具可以让Docker容器访问宿主机的NVIDIA GPU。在终端中运行以下命令：
 
 ```bash
-# 添加NVIDIA包的公钥
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-
-# 添加NVIDIA Docker的存储库
-curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu24.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+# 添加NVIDIA包的公钥以及NVIDIA Docker的存储库
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+  && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
 
 # 更新包列表
 sudo apt-get update
 
-# 安装nvidia-docker2
-sudo apt-get install -y nvidia-docker2
+# 安装nvidia-docker2 如果是docker镜像内则要去掉sudo
+sudo apt-get install -y nvidia-container-toolkit
 
 # 重启Docker服务
 sudo systemctl restart docker
@@ -539,12 +538,19 @@ sudo systemctl restart docker
 
 然后，可以使用以下命令创建一个Ubuntu 24.04的Docker容器，并使用宿主的NVIDIA GPU：
 
-```bash
-# 创建一个Ubuntu 24.04的Docker容器，并使用宿主的NVIDIA GPU
-docker run --gpus all -it ubuntu:24.04
+```Bash
+docker run --gpus all -it --hostname ailab ubuntu:24.04
 ```
 
-在这个命令中，`--gpus all`参数告诉Docker使用所有可用的GPU。`-it`参数让Docker在交互模式下运行，这样就可以在容器内部运行命令。`ubuntu:24.04`是要运行的Docker镜像的名称。
+在这个命令中，`--gpus all`参数告诉Docker使用所有可用的GPU。`-it`参数让Docker在交互模式下运行，这样就可以在容器内部运行命令。`ubuntu:24.04`是要运行的Docker镜像的名称。`ailab`是容器的名称。这个命令将会创建一个名为`ailab`的Docker容器，并使用宿主的NVIDIA GPU。
+
+然后，可以使用以下命令来进入容器：
+
+```Bash
+docker exec -it ailab /bin/bash
+```
+
+这个命令将会进入名为`ailab`的容器，并使用`/bin/bash`命令来启动一个交互式shell。
 
 最后，可以在Docker容器内部安装CUDA。首先，需要在容器内部运行以下命令来更新包列表：
 
@@ -558,9 +564,30 @@ apt-get update
 apt-get install -y cuda
 ```
 
-这样，就在Ubuntu 24.04上从命令行创建了一个Ubuntu 24.04的Docker容器，并使用了宿主的NVIDIA GPU和CUDA。
+接下来，下载安装miniconda3，可以访问 [https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/](https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/) 获得对应版本的最新安装包。以`miniconda3-latest`为关键字来搜索，就能找到最新的。这里以[https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh](https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh)为例：
 
-#### k8s 安装
+```bash
+wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh
+chmod +x Miniconda3-latest-Linux-x86_64.sh
+./Miniconda3-latest-Linux-x86_64.sh
+```
+
+接下来，安装miniconda3好了之后，配置环境变量。
+
+```bash
+conda init
+conda activate base
+```
+
+然后，可以运行以下命令来安装`PyTorch`和`CUDA`：
+
+```Bash
+conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch-nightly -c nvidia
+```
+
+这样，就在Ubuntu 24.04上从命令行创建了一个Ubuntu 24.04的Docker容器，并使用了宿主的NVIDIA GPU和CUDA，来运行PyTorch和CUDA。
+
+#### 2.4.4 k8s 安装
 
 
 在Ubuntu Server中，可以使用MicroK8s来管理容器。MicroK8s是一个轻量级的Kubernetes发行版，它可以在Ubuntu Server上运行，并且包含了大部分Kubernetes的功能。
