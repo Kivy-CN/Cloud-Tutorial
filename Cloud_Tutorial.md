@@ -513,11 +513,13 @@ docker run hello-world
 
 请注意，将用户添加到`docker`组会赋予他们类似于`root`用户的权限，因为他们现在可以运行Docker容器。在某些情况下，这可能会带来安全风险，所以请确保了解这些风险。
 
-#### 2.4.3 Docker 运行容器
+#### 2.4.3 Docker 宿主端配置GPU访问支持和CUDA库
 
 在Ubuntu 24.04上，可以使用以下步骤从命令行创建一个Ubuntu 24.04的Docker容器，并使用宿主的NVIDIA GPU和CUDA：
 
-首先，宿主机端，需要安装NVIDIA的Docker工具，这个工具可以让Docker容器访问宿主机的NVIDIA GPU。在终端中运行以下命令：
+首先，宿主机端，需要安装NVIDIA的CUDA。此步骤参考[https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)即可。
+
+然后还要安装NVIDIA的Docker工具，这个工具可以让Docker容器访问宿主机的NVIDIA GPU。在终端中运行以下命令：
 
 ```bash
 # 添加NVIDIA包的公钥以及NVIDIA Docker的存储库
@@ -536,6 +538,8 @@ sudo apt-get install -y nvidia-container-toolkit
 sudo systemctl restart docker
 ```
 
+#### 2.4.4 Docker 容器启动附带GPU访问和CUDA支持
+
 然后，可以使用以下命令创建一个Ubuntu 24.04的Docker容器，并使用宿主的NVIDIA GPU：
 
 ```Bash
@@ -551,18 +555,6 @@ docker exec -it ailab /bin/bash
 ```
 
 这个命令将会进入名为`ailab`的容器，并使用`/bin/bash`命令来启动一个交互式shell。
-
-最后，可以在Docker容器内部安装CUDA。首先，需要在容器内部运行以下命令来更新包列表：
-
-```bash
-apt-get update
-```
-
-然后，可以运行以下命令来安装CUDA：
-
-```bash
-apt-get install -y cuda
-```
 
 接下来，下载安装miniconda3，可以访问 [https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/](https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/) 获得对应版本的最新安装包。以`miniconda3-latest`为关键字来搜索，就能找到最新的。这里以[https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh](https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh)为例：
 
@@ -587,7 +579,7 @@ conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch-nightl
 
 这样，就在Ubuntu 24.04上从命令行创建了一个Ubuntu 24.04的Docker容器，并使用了宿主的NVIDIA GPU和CUDA，来运行PyTorch和CUDA。
 
-#### 2.4.4 k8s 安装
+#### 2.4.5 k8s 安装
 
 
 在Ubuntu Server中，可以使用MicroK8s来管理容器。MicroK8s是一个轻量级的Kubernetes发行版，它可以在Ubuntu Server上运行，并且包含了大部分Kubernetes的功能。
