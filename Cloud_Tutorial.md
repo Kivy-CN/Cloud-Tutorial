@@ -127,7 +127,7 @@ qemu-system-aarch64 -M virt,virtualization=true -m 8G -cpu max,pauth-impdef=on -
 qemu-system-aarch64 -M virt,virtualization=true -m 8G -cpu max,pauth-impdef=on -smp 8 -drive if=pflash,format=raw,file=efi.img,readonly=on  --accel tcg,thread=multi -device ramfb -device qemu-xhci -device usb-kbd -device usb-tablet -nic user,model=virtio-net-pci -drive if=virtio,id=system,format=raw,file=./ubuntu-arm64.img
 ```
 
-如果你用的不是img文件，而是qcow2文件，把命令改成这样就可以了：
+如果用的不是img文件，而是qcow2文件，把命令改成这样就可以了：
 
 ```bash
 # Ubuntu Arm 64，使用qcow2
@@ -201,7 +201,7 @@ VirtualBox 的处理器和内存设置等等都已经很简单且很直观了。
 
 ![](./images/VirtualBox_CPU.png)
 
-对于内存，一般需要设置为 8GB 以上，不过这需要你的宿主机至少有 16GB 以上的内存才行，否则可能会有很明显的卡顿。
+对于内存，一般需要设置为 8GB 以上，不过这需要宿主机至少有 16GB 以上的内存才行，否则可能会有很明显的卡顿。
 
 ![](./images/VirtualBox_RAM.png)
 
@@ -482,14 +482,15 @@ sudo apt-get install docker-compose
 然后，验证Docker Compose是否安装成功：
 
 ```bash
-docker-compose --version
+docker-compose --version # 老版本的命令，在咱们用的Ubuntu22.04的虚拟机里
+docker compose --version # 新版本的命令，在咱们用的Ubuntu24.04的虚拟机里
 ```
 
 这个命令将会打印出Docker Compose的版本，如果能看到版本号，那么说明Docker Compose已经成功安装。
 
 #### 2.4.2 Docker 权限配置
 
-在Ubuntu 24.04下，如果你想让当前用户可以运行Docker而不需要使用`sudo`，你可以将当前用户添加到`docker`用户组。以下是具体步骤：
+在Ubuntu 24.04下，如果想让当前用户可以运行Docker而不需要使用`sudo`，可以将当前用户添加到`docker`用户组。以下是具体步骤：
 
 1. 打开一个终端。
 
@@ -500,17 +501,17 @@ sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
 
-3. 重启你的电脑，或者注销并重新登录，以使这些更改生效。
+3. 重启电脑，或者注销并重新登录，以使这些更改生效。
 
-4. 为了验证更改是否生效，你可以运行以下命令，如果它能够无需`sudo`就能成功运行，那么就说明更改已经生效：
+4. 为了验证更改是否生效，可以运行以下命令，如果它能够无需`sudo`就能成功运行，那么就说明更改已经生效：
 
 ```bash
 docker run hello-world
 ```
 
-这个命令会尝试运行一个名为`hello-world`的Docker容器。如果一切正常，你应该能看到一些关于Docker的欢迎信息。
+这个命令会尝试运行一个名为`hello-world`的Docker容器。如果一切正常，应该能看到一些关于Docker的欢迎信息。
 
-请注意，将用户添加到`docker`组会赋予他们类似于`root`用户的权限，因为他们现在可以运行Docker容器。在某些情况下，这可能会带来安全风险，所以请确保你了解这些风险。
+请注意，将用户添加到`docker`组会赋予他们类似于`root`用户的权限，因为他们现在可以运行Docker容器。在某些情况下，这可能会带来安全风险，所以请确保了解这些风险。
 
 
 #### k8s 安装
