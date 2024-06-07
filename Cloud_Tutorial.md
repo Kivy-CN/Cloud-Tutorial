@@ -514,6 +514,52 @@ docker run hello-world
 请注意，将用户添加到`docker`组会赋予他们类似于`root`用户的权限，因为他们现在可以运行Docker容器。在某些情况下，这可能会带来安全风险，所以请确保了解这些风险。
 
 
+#### 2.4.3 Docker 运行容器
+
+在Ubuntu 24.04上，可以使用以下步骤从命令行创建一个Ubuntu 24.04的Docker容器，并使用宿主的NVIDIA GPU和CUDA：
+
+首先，需要安装NVIDIA的Docker工具，这个工具可以让Docker容器访问宿主机的NVIDIA GPU。在终端中运行以下命令：
+
+```bash
+# 添加NVIDIA包的公钥
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+
+# 添加NVIDIA Docker的存储库
+curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu24.04/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+
+# 更新包列表
+sudo apt-get update
+
+# 安装nvidia-docker2
+sudo apt-get install -y nvidia-docker2
+
+# 重启Docker服务
+sudo systemctl restart docker
+```
+
+然后，可以使用以下命令创建一个Ubuntu 24.04的Docker容器，并使用宿主的NVIDIA GPU：
+
+```bash
+# 创建一个Ubuntu 24.04的Docker容器，并使用宿主的NVIDIA GPU
+docker run --gpus all -it ubuntu:24.04
+```
+
+在这个命令中，`--gpus all`参数告诉Docker使用所有可用的GPU。`-it`参数让Docker在交互模式下运行，这样就可以在容器内部运行命令。`ubuntu:24.04`是要运行的Docker镜像的名称。
+
+最后，可以在Docker容器内部安装CUDA。首先，需要在容器内部运行以下命令来更新包列表：
+
+```bash
+apt-get update
+```
+
+然后，可以运行以下命令来安装CUDA：
+
+```bash
+apt-get install -y cuda
+```
+
+这样，就在Ubuntu 24.04上从命令行创建了一个Ubuntu 24.04的Docker容器，并使用了宿主的NVIDIA GPU和CUDA。
+
 #### k8s 安装
 
 
