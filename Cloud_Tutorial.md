@@ -543,7 +543,7 @@ sudo systemctl restart docker
 然后，可以使用以下命令创建一个Ubuntu 24.04的Docker容器，并使用宿主的NVIDIA GPU：
 
 ```Bash
-docker run --gpus all -it --hostname ailab ubuntu:24.04
+docker run --gpus all -it --hostname ailab chinageology/ailab:latest
 ```
 
 在这个命令中，`--gpus all`参数告诉Docker使用所有可用的GPU。`-it`参数让Docker在交互模式下运行，这样就可以在容器内部运行命令。`ubuntu:24.04`是要运行的Docker镜像的名称。`ailab`是容器的名称。这个命令将会创建一个名为`ailab`的Docker容器，并使用宿主的NVIDIA GPU。
@@ -577,10 +577,62 @@ conda activate base
 conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch-nightly -c nvidia
 ```
 
+这个命令将会安装最新版本的PyTorch和CUDA。
+
+然后在容器中运行下列代码来测试是否成功：
+
+```python
+import torch
+# 打印PyTorch版本
+print("PyTorch Version:", torch.__version__)
+# 检查CUDA是否可用
+if torch.cuda.is_available():
+    print("CUDA is available. GPU support is enabled.")
+    print("GPU Name:", torch.cuda.get_device_name(0))
+else:
+    print("CUDA is not available. GPU support is not enabled.")
+```
+    
+如果输出为`True`，则说明CUDA已经成功安装。
+
 这样，就在Ubuntu 24.04上从命令行创建了一个Ubuntu 24.04的Docker容器，并使用了宿主的NVIDIA GPU和CUDA，来运行PyTorch和CUDA。
 
-#### 2.4.5 k8s 安装
 
+#### 2.4.5 Docker 删除镜像和容器
+
+要删除本地的所有Docker容器和镜像，请按照以下步骤操作。请注意，这些操作将会删除所有容器和镜像，包括未使用的和正在运行的，因此请确保确实希望执行这些操作。
+
+### 删除所有容器
+
+首先，停止所有正在运行的容器：
+
+```bash
+docker stop $(docker ps -aq)
+```
+
+然后，删除所有容器（包括未运行的）：
+
+```bash
+docker rm $(docker ps -aq)
+```
+
+### 删除所有镜像
+
+删除所有Docker镜像：
+
+```bash
+docker rmi -f $(docker images -q)
+```
+
+### 注意
+
+- 上述命令中使用的`$(docker ps -aq)`和`$(docker images -q)`分别用于获取所有容器的ID和所有镜像的ID。
+- 如果在尝试删除镜像时遇到错误，表示有容器仍在使用某些镜像。确保所有容器都已被删除后再次尝试。
+- 如果想要强制删除正在使用的镜像，可以在`docker rmi`命令中加上`-f`参数，即`docker rmi -f $(docker images -q)`。
+
+执行这些命令后，Docker环境将被清理，所有本地的容器和镜像都将被删除。请谨慎操作，确保不会误删重要的容器或镜像。
+
+#### 2.4.6 k8s 安装
 
 在Ubuntu Server中，可以使用MicroK8s来管理容器。MicroK8s是一个轻量级的Kubernetes发行版，它可以在Ubuntu Server上运行，并且包含了大部分Kubernetes的功能。
 
@@ -926,6 +978,69 @@ PVE还支持基于KVM的虚拟化技术，它可以在PVE环境中创建和管�
 
 Jupyter是PaaS的一个典型，作为一个开源的交互式计算环境，具有一个Web界面，用户可以在其中编写和运行代码，查看结果，创建和共享文档。Jupyter支持多种编程语言，包括Python、R、Julia等，用户可以根据自己的需求选择合适的语言。
 Jupyter的一个重要特性是其文档文件（称为notebook）可以包含实时代码、运行结果、数学公式、可视化和文本等到，这使得用户可以创建富有交互性的文档，用于数据分析、科学计算、机器学习等任务。
+
+#### 4.3.1 Jupyter 的安装过程
+
+使用以下命令来进入容器：
+
+```Bash
+docker run -p 8888:8888 --gpus all -it --hostname ailab chinageology/ailab:latest
+docker exec -it ailab /bin/bash
+```
+
+
+
+
+
+然后激活已经安装好的miniconda3环境：
+
+```Bash
+conda activate
+```
+
+接下来，安装jupyter：
+
+```Bash
+conda install jupyter
+pip install ipython jupyter
+```
+#### 4.3.2 Jupyter Server 的配置
+
+要让Jupyter Notebook在局域网中可访问，需要启动Jupyter Notebook服务器时指定`--ip`为机器在局域网中的IP地址，并且可能需要指定`--port`（如果默认端口`8888`已被占用或想使用其他端口）。此外，为了安全起见，建议设置一个密码或token。以下是具体步骤：
+
+1. **找到局域网IP地址**：首先，需要知道计算机在局域网中的IP地址。在Windows上，可以在命令提示符中运行`ipconfig`来查找。在Linux或Mac上，可以在终端中运行`ifconfig`或`ip addr`。
+
+2. **生成Jupyter配置文件（如果还没有）**：运行以下命令生成Jupyter Notebook的配置文件，如果还没有的话。
+
+```bash
+jupyter notebook --generate-config
+```
+
+3. **设置密码（可选）**：为了安全起见，建议设置一个密码。运行以下命令并按提示操作：
+
+```bash
+jupyter notebook password
+```
+
+4. **启动Jupyter Notebook**：使用下面的命令启动Jupyter Notebook，将`<your-lan-ip>`替换为第1步中找到的IP地址。也可以自定义端口号（默认为8888）。
+
+  ```bash
+  jupyter notebook --ip=<your-lan-ip> --port=8888
+  ```
+
+  例如，如果局域网IP地址是`192.168.1.5`，则命令如下：
+
+  ```bash
+  jupyter notebook --ip=192.168.1.5 --port=8888
+  ```
+
+现在，Jupyter Notebook服务器将在局域网中可访问。其他人可以通过在浏览器地址栏输入`http://<your-lan-ip>:8888`来访问它，例如`http://192.168.1.5:8888`。首次访问时，可能需要输入之前设置的密码或token。
+
+**注意**：确保防火墙和路由器设置允许通过所选端口进行通信。在某些环境中，可能需要配置防火墙规则或端口转发。
+
+
+
+即可访问jupyter server。
 
 ### 4.4 SaaS 的典型示例 Seafile
 
