@@ -544,9 +544,10 @@ sudo systemctl restart docker
 
 ```Bash
 docker run --gpus all -it --name ailab --hostname ailab chinageology/ailab:latest
+# docker run -p 8888:8888 --gpus all -it --name ailab --hostname ailab chinageology/ailab:latest /bin/bash
 ```
 
-在这个命令中，`--gpus all`参数告诉Docker使用所有可用的GPU。`-it`参数让Docker在交互模式下运行，这样就可以在容器内部运行命令。`ubuntu:24.04`是要运行的Docker镜像的名称。`ailab`是容器的名称。这个命令将会创建一个名为`ailab`的Docker容器，并使用宿主的NVIDIA GPU。
+在这个命令中，`--gpus all`参数告诉Docker使用所有可用的GPU。`-it`参数让Docker在交互模式下运行，这样就可以在容器内部运行命令。`chinageology/ailab:latest`是要运行的Docker镜像的名称。`ailab`是容器的名称。这个命令将会创建一个名为`ailab`的Docker容器，并使用宿主的NVIDIA GPU。
 
 然后，可以使用以下命令来进入容器：
 
@@ -600,7 +601,48 @@ else:
 
 #### 2.4.5 Docker 镜像的打包压缩
 
+将名为 `ailab` 的 Docker 容器打包、压缩成本地文件，并在另一台机器上导入运行，可以按照以下步骤操作：
 
+1. **将容器保存为镜像**:
+首先，需要将运行中的容器 `ailab` 提交为一个新的镜像。这可以通过 `docker commit` 命令完成。
+
+```bash
+docker commit ailab chinageology/ailab:latest
+```
+
+这里，`ailab` 是容器的名称或ID，`chinageology/ailab:latest` 是为这个镜像指定的名称和标签。
+
+2. **将镜像保存为 tar 文件**:
+接下来，使用 `docker save` 命令将刚才创建的镜像保存为一个 tar 文件。
+
+```bash
+docker save chinageology/ailab:latest > ailab-image.tar
+```
+
+这会创建一个名为 `ailab-image.tar` 的文件，包含了镜像的所有层。
+
+3. **将 tar 文件复制到另一台机器**:
+使用喜欢的方法将 `ailab-image.tar` 文件复制到目标机器上。例如，可以使用 `scp`, `rsync` 或者通过 USB 驱动器等物理介质。
+
+```bash
+scp ailab-image.tar user@target-machine:/path/to/destination
+```
+
+4. **在目标机器上加载镜像**:
+在目标机器上，使用 `docker load` 命令从 tar 文件中加载镜像。
+
+```bash
+docker load < ailab-image.tar
+```
+
+5. **运行镜像**:
+最后，在目标机器上，可以像平常一样使用 `docker run` 命令来运行这个镜像。
+
+```bash
+docker run -p 8888:8888 --gpus all -it --hostname ailab chinageology/ailab:latest
+```
+
+这样，就成功地将一个运行中的 Docker 容器打包、压缩，并在另一台机器上导入并运行了。
 
 #### 2.4.6 Docker 镜像和容器的删除
 
@@ -978,12 +1020,12 @@ PVE (Proxmox Virtual Environment) 是一个开源的虚拟化平台，它提供�
 PVE还提供了一种叫做LXC的轻量级容器技术，它允许用户在同一台物理机上运行多个隔离的Linux系统，每个系统都有自己的文件系统、网络配置和进程空间，但它们都共享同一台物理机的硬件资源。这种技术可以提高硬件资源的利用率，降低运行成本。
 PVE还支持基于KVM的虚拟化技术，它可以在PVE环境中创建和管理虚拟机。用户可以在PVE环境中创建多个虚拟机，每个虚拟机都可以运行不同的操作系统和应用程序。用户可以根据自己的需求来配置虚拟机的CPU、内存和存储等资源。
 
-### 4.3 PaaS 的典型示例 Jupyter
+### 4.4 PaaS 的典型示例 Jupyter
 
 Jupyter是PaaS的一个典型，作为一个开源的交互式计算环境，具有一个Web界面，用户可以在其中编写和运行代码，查看结果，创建和共享文档。Jupyter支持多种编程语言，包括Python、R、Julia等，用户可以根据自己的需求选择合适的语言。
 Jupyter的一个重要特性是其文档文件（称为notebook）可以包含实时代码、运行结果、数学公式、可视化和文本等到，这使得用户可以创建富有交互性的文档，用于数据分析、科学计算、机器学习等任务。
 
-#### 4.3.1 Jupyter 的安装过程
+#### 4.4.1 Jupyter 的安装过程
 
 使用以下命令来进入容器：
 
@@ -1003,7 +1045,7 @@ conda activate
 ```Bash
 pip install jupyter
 ```
-#### 4.3.2 Jupyter Server 的配置
+#### 4.4.2 Jupyter Server 的配置
 
 要让Jupyter Notebook在局域网中可访问，需要启动Jupyter Notebook服务器时指定`--ip`为机器在局域网中的IP地址，并且可能需要指定`--port`（如果默认端口`8888`已被占用或想使用其他端口）。此外，为了安全起见，建议设置一个密码或token。以下是具体步骤：
 
@@ -1018,7 +1060,6 @@ jupyter notebook --generate-config
 如果提示生成了一份`~/.jupyter/jupyter_notebook_config.py`文件，就代表成功了。
 
 3. **设置密码（可选）**：为了安全起见，建议设置一个密码。
-
 
 首先，在任何有 Python 环境的机器上生成一个加密的密码。
 然后打开一个 Python 交互式会话或脚本，然后输入以下代码：
@@ -1066,7 +1107,9 @@ c.ServerApp.password = "argon2:$argon2id$v=19$m=10240,t=10,p=8$MNkUJSIPP7WJOHy3V
 
 然后保存并退出。
 
-4. **启动Jupyter Notebook**：使用下面的命令启动Jupyter Notebook，将`<your-lan-ip>`替换为第1步中找到的IP地址。也可以自定义端口号（默认为8888）。
+#### 4.4.3 启动 Jupyter Server
+
+**启动Jupyter Notebook**：使用下面的命令启动Jupyter Notebook，将`<your-lan-ip>`替换为第1步中找到的IP地址。也可以自定义端口号（默认为8888）。
 
 ```bash
 jupyter notebook --ip=0.0.0.0 --port=8888
@@ -1077,8 +1120,6 @@ jupyter notebook --ip=0.0.0.0 --port=8888
 ```bash
 jupyter notebook --ip=0.0.0.0 --port=8888 --allow-root 
 ```
-
-
 现在，Jupyter Notebook服务器将在局域网中可访问。其他人可以通过在浏览器地址栏输入`http://宿主机ip:8888`来访问它，例如`http://192.168.1.5:8888`。首次访问时，可能需要输入之前设置的密码`ailab`。
 
 **注意**：确保防火墙和路由器设置允许通过所选端口进行通信。在某些环境中，可能需要配置防火墙规则或端口转发。
@@ -1106,6 +1147,30 @@ PyTorch Version: 2.4.0.dev20240607
 CUDA is available. GPU support is enabled.
 GPU Name: NVIDIA GeForce RTX 4060 Laptop GPU
 ```
+
+#### 4.4.4 停止 Jupyter Server
+
+
+要停止通过命令 `jupyter notebook --ip=0.0.0.0 --port=8888 --allow-root` 启动的 Jupyter Notebook 服务，尤其是如果 Jupyter Notebook 在后台运行，或者不确定如何访问启动服务的终端会话，可以通过查找进程ID（PID）并杀死该进程来停止服务。在终端中执行以下命令：
+
+```bash
+# 查找 Jupyter Notebook 的进程
+ps aux | grep jupyter
+```
+
+这将列出所有与 Jupyter Notebook 相关的进程。找到对应的进程ID（通常是列表中第二列的数字），然后使用 `kill` 命令加上 PID 来停止它。例如，如果进程ID是 1234，执行：
+
+```bash
+kill 1234
+```
+
+如果标准 `kill` 命令无法停止进程，可以尝试使用 `kill -9` 命令强制杀死进程：
+
+```bash
+kill -9 1234
+```
+
+这些步骤应该可以帮助停止运行中的 Jupyter Notebook 服务。
 
 ### 4.4 SaaS 的典型示例 Seafile
 
