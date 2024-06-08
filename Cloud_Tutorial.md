@@ -543,7 +543,7 @@ sudo systemctl restart docker
 然后，可以使用以下命令创建一个Ubuntu 24.04的Docker容器，并使用宿主的NVIDIA GPU：
 
 ```Bash
-docker run --gpus all -it --hostname ailab chinageology/ailab:latest
+docker run --gpus all -it --name ailab --hostname ailab chinageology/ailab:latest
 ```
 
 在这个命令中，`--gpus all`参数告诉Docker使用所有可用的GPU。`-it`参数让Docker在交互模式下运行，这样就可以在容器内部运行命令。`ubuntu:24.04`是要运行的Docker镜像的名称。`ailab`是容器的名称。这个命令将会创建一个名为`ailab`的Docker容器，并使用宿主的NVIDIA GPU。
@@ -598,11 +598,15 @@ else:
 这样，就在Ubuntu 24.04上从命令行创建了一个Ubuntu 24.04的Docker容器，并使用了宿主的NVIDIA GPU和CUDA，来运行PyTorch和CUDA。
 
 
-#### 2.4.5 Docker 删除镜像和容器
+#### 2.4.5 Docker 镜像的打包压缩
+
+
+
+#### 2.4.6 Docker 镜像和容器的删除
 
 要删除本地的所有Docker容器和镜像，请按照以下步骤操作。请注意，这些操作将会删除所有容器和镜像，包括未使用的和正在运行的，因此请确保确实希望执行这些操作。
 
-### 删除所有容器
+###### 删除所有容器
 
 首先，停止所有正在运行的容器：
 
@@ -616,7 +620,7 @@ docker stop $(docker ps -aq)
 docker rm $(docker ps -aq)
 ```
 
-### 删除所有镜像
+###### 删除所有镜像
 
 删除所有Docker镜像：
 
@@ -624,7 +628,7 @@ docker rm $(docker ps -aq)
 docker rmi -f $(docker images -q)
 ```
 
-### 注意
+###### 注意
 
 - 上述命令中使用的`$(docker ps -aq)`和`$(docker images -q)`分别用于获取所有容器的ID和所有镜像的ID。
 - 如果在尝试删除镜像时遇到错误，表示有容器仍在使用某些镜像。确保所有容器都已被删除后再次尝试。
@@ -632,7 +636,7 @@ docker rmi -f $(docker images -q)
 
 执行这些命令后，Docker环境将被清理，所有本地的容器和镜像都将被删除。请谨慎操作，确保不会误删重要的容器或镜像。
 
-#### 2.4.6 k8s 安装
+#### 2.4.7 k8s 安装
 
 在Ubuntu Server中，可以使用MicroK8s来管理容器。MicroK8s是一个轻量级的Kubernetes发行版，它可以在Ubuntu Server上运行，并且包含了大部分Kubernetes的功能。
 
@@ -984,13 +988,9 @@ Jupyter的一个重要特性是其文档文件（称为notebook）可以包含�
 使用以下命令来进入容器：
 
 ```Bash
-docker run -p 8888:8888 --gpus all -it --hostname ailab chinageology/ailab:latest
+docker run -p 8888:8888 --gpus all -it --name ailab --hostname ailab chinageology/ailab:latest
 docker exec -it ailab /bin/bash
 ```
-
-
-
-
 
 然后激活已经安装好的miniconda3环境：
 
@@ -1001,8 +1001,7 @@ conda activate
 接下来，安装jupyter：
 
 ```Bash
-conda install jupyter
-pip install ipython jupyter
+pip install jupyter
 ```
 #### 4.3.2 Jupyter Server 的配置
 
@@ -1016,31 +1015,97 @@ pip install ipython jupyter
 jupyter notebook --generate-config
 ```
 
-3. **设置密码（可选）**：为了安全起见，建议设置一个密码。运行以下命令并按提示操作：
+如果提示生成了一份`~/.jupyter/jupyter_notebook_config.py`文件，就代表成功了。
+
+3. **设置密码（可选）**：为了安全起见，建议设置一个密码。
+
+
+首先，在任何有 Python 环境的机器上生成一个加密的密码。
+然后打开一个 Python 交互式会话或脚本，然后输入以下代码：
+
+```Bash
+# 假如我们这里使用的密码是 ailab
+jupyter notebook password
+Enter password:
+Verify password:
+[JupyterPasswordApp] Wrote hashed password to ~/.jupyter/jupyter_server_config.json
+```
+
+当运行这段代码时，它会提示输入`密码`两次。
+完成后，加密好的密码就被存放在`~/.jupyter/jupyter_server_config.json`当中了。
+
+使用下列命令打开上述文件：
+
+```Bash
+nano ~/.jupyter/jupyter_server_config.json
+```
+
+```Json
+{
+  "IdentityProvider": {
+    "hashed_password": "argon2:$argon2id$v=19$m=10240,t=10,p=8$MNkUJSIPP7WJOHy3VLrVpQ$HjHDeY89CBXPGzc3AVG0Ut+WZOAddFXfCwbH02Po8gA"
+  }
+}
+
+```
+
+上面的`"argon2:$argon2id$v=19$m=10240,t=10,p=8$MNkUJSIPP7WJOHy3VLrVpQ$HjHDeY89CBXPGzc3AVG0Ut+WZOAddFXfCwbH02Po8gA"`
+就是加密好的密码。
+
+然后运行以下命令编辑配置文件：
 
 ```bash
-jupyter notebook password
+nano ~/.jupyter/jupyter_notebook_config.py
 ```
+
+然后在文件中找到`c.NotebookApp.password`并注释掉该行，然后添加以下行：
+```Python
+# c.ServerApp.password = ''
+c.ServerApp.password = "argon2:$argon2id$v=19$m=10240,t=10,p=8$MNkUJSIPP7WJOHy3VLrVpQ$HjHDeY89CBXPGzc3AVG0Ut+WZOAddFXfCwbH02Po8gA"
+```
+
+然后保存并退出。
 
 4. **启动Jupyter Notebook**：使用下面的命令启动Jupyter Notebook，将`<your-lan-ip>`替换为第1步中找到的IP地址。也可以自定义端口号（默认为8888）。
 
-  ```bash
-  jupyter notebook --ip=<your-lan-ip> --port=8888
-  ```
+```bash
+jupyter notebook --ip=0.0.0.0 --port=8888
+```
 
-  例如，如果局域网IP地址是`192.168.1.5`，则命令如下：
+如果是以root身份来运行的，就需要加上`--allow-root`参数：
 
-  ```bash
-  jupyter notebook --ip=192.168.1.5 --port=8888
-  ```
+```bash
+jupyter notebook --ip=0.0.0.0 --port=8888 --allow-root 
+```
 
-现在，Jupyter Notebook服务器将在局域网中可访问。其他人可以通过在浏览器地址栏输入`http://<your-lan-ip>:8888`来访问它，例如`http://192.168.1.5:8888`。首次访问时，可能需要输入之前设置的密码或token。
+
+现在，Jupyter Notebook服务器将在局域网中可访问。其他人可以通过在浏览器地址栏输入`http://宿主机ip:8888`来访问它，例如`http://192.168.1.5:8888`。首次访问时，可能需要输入之前设置的密码`ailab`。
 
 **注意**：确保防火墙和路由器设置允许通过所选端口进行通信。在某些环境中，可能需要配置防火墙规则或端口转发。
 
-
-
 即可访问jupyter server。
+
+然后输入下列代码：
+
+```Python
+import torch
+# 打印PyTorch版本
+print("PyTorch Version:", torch.__version__)
+# 检查CUDA是否可用
+if torch.cuda.is_available():
+    print("CUDA is available. GPU support is enabled.")
+    print("GPU Name:", torch.cuda.get_device_name(0))
+else:
+    print("CUDA is not available. GPU support is not enabled.")
+```
+
+得到的输出应该是：
+
+```Bash
+PyTorch Version: 2.4.0.dev20240607
+CUDA is available. GPU support is enabled.
+GPU Name: NVIDIA GeForce RTX 4060 Laptop GPU
+```
 
 ### 4.4 SaaS 的典型示例 Seafile
 
