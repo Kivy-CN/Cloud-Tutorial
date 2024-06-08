@@ -622,7 +622,7 @@ docker save chinageology/ailab:latest > ailab-image.tar
 这会创建一个名为 `ailab-image.tar` 的文件，包含了镜像的所有层。
 
 3. **将 tar 文件复制到另一台机器**:
-使用喜欢的方法将 `ailab-image.tar` 文件复制到目标机器上。例如，可以使用 `scp`, `rsync` 或者通过 USB 驱动器等物理介质。
+使用某一种方法将 `ailab-image.tar` 文件复制到目标机器上。例如，可以使用 `scp`, `rsync` 或者通过 USB 驱动器等物理介质。
 
 ```bash
 scp ailab-image.tar user@target-machine:/path/to/destination
