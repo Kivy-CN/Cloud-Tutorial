@@ -455,7 +455,7 @@ sudo apt-get update
 2. 安装Docker：
 
 ```bash
-sudo apt-get install docker.io
+sudo apt-get install docker.io docker-buildx
 ```
 
 3. 启动Docker服务，并设置它在启动时自动运行：
@@ -651,7 +651,7 @@ docker load < ailab-image.tar.gz
 最后，在目标机器上，可以像平常一样使用 `docker run` 命令来运行这个镜像。
 
 ```bash
-docker run -p 8888:8888 --gpus all -it --hostname ailab chinageology/ailab:latest
+docker run -p 8888:8888 --gpus all -it --name ailab --hostname ailab chinageology/ailab:latest
 ```
 
 这样，就成功地将一个运行中的 Docker 容器打包、压缩，并在另一台机器上导入并运行了。
@@ -690,7 +690,121 @@ docker rmi -f $(docker images -q)
 
 执行这些命令后，Docker环境将被清理，所有本地的容器和镜像都将被删除。请谨慎操作，确保不会误删重要的容器或镜像。
 
-#### 2.4.7 k8s 安装
+#### 2.4.7 容器的定制
+
+要创建一个包含最新版 CUDA 支持以及最新的 PyTorch GPU 加速的 Ubuntu 24.04 系统的 Docker 容器，可以遵循以下步骤：
+
+1. **启用实验特性**
+
+编辑或创建 Docker 配置文件 `nano ~/.docker/config.json`。
+添加或更新配置以启用实验性特性：
+
+```json
+{
+   "experimental": "enabled"
+}
+```
+
+保存文件并重启 Docker 服务。这可以通过运行 `sudo systemctl restart docker` 来完成。
+
+启用实验性特性后，应该能够使用 Docker buildx。可以通过运行 `docker buildx version` 来验证 buildx 是否可用。
+
+
+2. **选择合适的基础镜像**：找到一个包含 Ubuntu 24.04 和最新版 CUDA 的基础镜像。然而，由于 Ubuntu 24.04 是一个未来的版本（假设指的是一个新版本，因为截至我的知识更新日期，最新的 LTS 版本是 Ubuntu 22.04），可能还没有直接包含 CUDA 的官方镜像。因此，可能需要从一个包含最新 CUDA 的官方 NVIDIA 镜像开始，该镜像基于 Ubuntu 的最新 LTS 版本。
+
+3. **安装 PyTorch**：在容器内部，可以使用 PyTorch 官方提供的命令来安装最新版本的 PyTorch，确保安装的是支持 CUDA 的版本。
+
+
+
+
+以下是一个 Dockerfile 的示例，展示如何从 NVIDIA CUDA 的官方镜像开始构建，然后安装 PyTorch：
+
+```Dockerfile
+# 使用 NVIDIA CUDA 12.5 基础镜像，基于 Ubuntu 22.04
+FROM nvidia/cuda:12.5.0-runtime-ubuntu22.04
+
+# 设置非交互式安装，避免安装过程中的提示
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 安装 Python 3 和 pip
+RUN apt-get update && apt-get install -y python3 python3-pip 
+
+# 安装 PyTorch (确保选择支持 CUDA 版本的 PyTorch)
+RUN pip3 install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu124
+
+# 设置工作目录
+WORKDIR /workspace
+
+# 当容器启动时，默认执行 bash
+CMD ["/bin/bash"]
+```
+
+Dockerfile 通常没有扩展名，它的文件名就是 `Dockerfile`。
+在构建 Docker 镜像时，Docker 会默认查找名为 `Dockerfile` 的文件。
+
+这个 Dockerfile 做了以下几件事情：
+
+- 从 NVIDIA 的 CUDA 12.5 基础镜像开始，该镜像基于 Ubuntu 22.04。可以根据需要选择其他版本的 CUDA 镜像。
+- 安装 Python 3 和 pip。
+- 使用 pip 安装 PyTorch，这里使用的是支持 CUDA 12.4的版本。需要根据选择的 CUDA 基础镜像版本来安装相应版本的 PyTorch。
+
+构建这个 Dockerfile：
+
+```bash
+docker build -t pytorch-cuda:latest .
+```
+
+一旦启用了 BuildKit，就可以使用 `docker build` 命令来构建镜像，BuildKit 将自动被使用。如果想使用 Buildx 的特定功能，可以使用 `docker buildx build` 命令代替。例如：
+
+```bash
+sudo apt install docker-buildx
+export DOCKER_BUILDKIT=1
+sudo docker buildx build -t pytorch-cuda:latest --load .
+```
+
+这个命令会使用 Buildx 构建镜像。
+
+然后会出现类似下面的输出：
+```Bash
+d$ sudo docker buildx build -t pytorch-cuda:latest --load .
+[+] Building 16.3s (3/7)                                                docker:default
+ => [internal] load .dockerignore                                                 0.0s
+ => => transferring context: 2B                                                   0.0s
+ => [internal] load build definition from Dockerfile                              0.0s
+ => => transferring dockerfile: 603B                                              0.0s
+ => [internal] load metadata for docker.io/nvidia/cuda:12.5.0-runtime-ubuntu22.0  2.7s
+ => [1/4] FROM docker.io/nvidia/cuda:12.5.0-runtime-ubuntu22.04@sha256:75292ffa  13.6s
+ => => resolve docker.io/nvidia/cuda:12.5.0-runtime-ubuntu22.04@sha256:75292ffab  0.0s
+ => => sha256:75292ffaba88ea846d7f28261d4ed302fbe1124f10ff9da30e4403 743B / 743B  0.0s
+ => => sha256:159a957801e9b3b3df287adec3a569f5e280d0aaa44497f379 2.21kB / 2.21kB  0.0s
+ => => sha256:5b5f281aa9fa4a9763403c8fc11286d206399af64435f863af 4.62MB / 4.62MB  0.9s
+ => => sha256:15964878accaa6993ed81b455f2b270627dcbbcc417bc2b8 14.43kB / 14.43kB  0.0s
+ => => sha256:a8b1c5f80c2d2a757adc963e3fe2dad0b4d229f83df3349f 29.53MB / 29.53MB  2.4s
+ => => sha256:e85ef0eeb66cb32e80ff3b515ccf662a7e334b8009ae052e 55.93MB / 55.93MB  4.2s
+ => => sha256:0d0a907de515114944527766676078f7f87a89d577cc3b003081e8 183B / 183B  1.6s
+ => => sha256:508725ab4fe4de0456be39a9357fb6a12224074ad7eecdfbeb 6.89kB / 6.89kB  2.1s
+ => => sha256:496b16ddfbf2c518b770e1f6c6717403904bd9cfbf89c66 324.01MB / 1.36GB  13.6s
+ => => sha256:a2c7209f2750da3fabd70d4ea0408ff8e845811da4e2f8f6 64.10kB / 64.10kB  3.1s
+ => => extracting sha256:a8b1c5f80c2d2a757adc963e3fe2dad0b4d229f83df3349fbb70e4d  1.0s
+ => => sha256:522339e778aca8bebe341f07f192a3484d19356e1095c72804 1.69kB / 1.69kB  3.5s
+ => => extracting sha256:5b5f281aa9fa4a9763403c8fc11286d206399af64435f863af023a0  0.2s
+ => => sha256:5cb97a32151bc38e8cc3fc80975ad5fde5d2ea28c837b3ae4b 1.52kB / 1.52kB  4.0s
+ => => extracting sha256:e85ef0eeb66cb32e80ff3b515ccf662a7e334b8009ae052ec344ab4  0.9s
+ => => extracting sha256:0d0a907de515114944527766676078f7f87a89d577cc3b003081e8b  0.0s
+ => => extracting sha256:508725ab4fe4de0456be39a9357fb6a12224074ad7eecdfbeb8f280  0.0s
+```
+
+通过这些步骤，可以在命令行界面下使用 BuildKit 来构建 Docker 镜像，从而解决因使用旧版构建器而出现的弃用警告。如果没有特定的需求要直接使用 Buildx 的特定功能，简单地设置环境变量 `DOCKER_BUILDKIT=1` 并使用 `docker build` 命令就足够了。
+
+运行容器：
+
+```bash
+docker run --gpus all -it pytorch-cuda:latest
+```
+
+请注意，这个示例使用的是 Ubuntu 22.04，可以根据实际情况调整 CUDA 和 Ubuntu 的版本。
+
+#### 2.4.8 k8s 安装
 
 在Ubuntu Server中，可以使用MicroK8s来管理容器。MicroK8s是一个轻量级的Kubernetes发行版，它可以在Ubuntu Server上运行，并且包含了大部分Kubernetes的功能。
 
@@ -703,13 +817,54 @@ sudo snap install microk8s --classic
 然后，可以使用`microk8s`命令来管理的Kubernetes集群。例如，可以使用以下命令来查看集群的状态：
 
 ```bash
-microk8s status
+sudo microk8s status
 ```
+
+不过，默认安装下的`microk8s`可能需要检测一下配置信息，需要运行命令如下：
+
+```Bash
+sudo microk8s inspect 
+```
+
+比如下面是一个实例上的显示：
+```Bash
+WARNING:  Docker is installed.
+File "/etc/docker/daemon.json" does not exist.
+You should create it and add the following lines:
+{
+    "insecure-registries" : ["localhost:32000"]
+}
+and then restart docker with: sudo systemctl restart docker
+```
+
+根据提示，就要添加配置文件`sudo nano /etc/docker/daemon.json`，内容如下：
+
+```Bash
+{
+    "insecure-registries" : ["localhost:32000"]
+}
+```
+
+然后，重启Docker服务：
+
+```Bash
+sudo systemctl restart docker
+```
+
+然后，再次运行`microk8s inspect`命令，应该就能看到配置信息了。
+
+接下来，可以使用以下命令来启用Kubernetes的组件：
+
+```bash
+sudo microk8s enable dns
+sudo microk8s enable registry
+```
+
 
 对于Web界面，Kubernetes有一个叫做Dashboard的Web UI。可以使用以下命令来启用它：
 
 ```bash
-microk8s enable dashboard
+sudo microk8s enable dashboard
 ```
 
 然后，可以使用以下命令来获取访问Dashboard的令牌：
