@@ -545,6 +545,7 @@ sudo systemctl restart docker
 ```Bash
 docker run --gpus all -it --name ailab --hostname ailab chinageology/ailab:latest
 # docker run -p 8888:8888 --gpus all -it --name ailab --hostname ailab chinageology/ailab:latest /bin/bash
+docker run -p 9999:8888 --gpus all -it --name torch --hostname torch chinageology/pytorch-cuda:latest
 ```
 
 在这个命令中，`--gpus all`参数告诉Docker使用所有可用的GPU。`-it`参数让Docker在交互模式下运行，这样就可以在容器内部运行命令。`chinageology/ailab:latest`是要运行的Docker镜像的名称。`ailab`是容器的名称。这个命令将会创建一个名为`ailab`的Docker容器，并使用宿主的NVIDIA GPU。
@@ -645,6 +646,7 @@ scp ailab-image.tar user@target-machine:/path/to/destination
 docker load < ailab-image.tar
 gunzip -c ailab-image.tar.gz | docker load
 docker load < ailab-image.tar.gz
+docker load -i ailab-image.tar.gz
 ```
 
 5. **运行镜像**:
