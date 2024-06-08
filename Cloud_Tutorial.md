@@ -619,8 +619,6 @@ docker commit ailab chinageology/ailab:latest
 docker save chinageology/ailab:latest > ailab-image.tar
 # 如果宿主机是GNU/Linux，压缩需要用下面的命令：
 docker save chinageology/ailab:latest | gzip > ailab-image.tar.gz
-# 如果宿主机是Windows，压缩就需要用下面的命令：
-docker save chinageology/ailab:latest | Compress-Archive -DestinationPath ailab-image.zip
 ```
 
 这会创建一个名为 `ailab-image.tar` 的文件，包含了镜像的所有层。
@@ -632,15 +630,16 @@ docker save chinageology/ailab:latest | Compress-Archive -DestinationPath ailab-
 scp ailab-image.tar user@target-machine:/path/to/destination
 ```
 
-`docker load` 命令不能直接用于加载 `.zip` 文件。
-`docker load` 命令期望输入格式为 `.tar` 文件，特别是那些通过 `docker save` 命令创建的 `.tar` 文件。
-如果有一个 `.zip` 文件（例如 `ailab-image.zip`），需要先解压这个文件，然后再使用 `docker load` 命令加载解压后的 `.tar` 文件。Windows 上的 `ailab-image.zip` 文件首先需要解压以获取 `.tar` 文件。
 
 
 4. **在目标机器上加载镜像**:
 
 
 在目标机器上，使用 `docker load` 命令从 tar 文件中加载镜像。
+
+`docker load` 命令不能直接用于加载 `.zip` 文件。
+`docker load` 命令期望输入格式为 `.tar` 文件，特别是那些通过 `docker save` 命令创建的 `.tar` 文件。
+如果有一个 `.zip` 文件（例如 `ailab-image.zip`），需要先解压这个文件，然后再使用 `docker load` 命令加载解压后的 `.tar` 文件。
 
 ```bash
 docker load < ailab-image.tar
