@@ -545,6 +545,7 @@ sudo systemctl restart docker
 ```Bash
 docker run --gpus all -it --name ailab --hostname ailab chinageology/ailab:latest
 # docker run -p 8888:8888 --gpus all -it --name ailab --hostname ailab chinageology/ailab:latest /bin/bash
+# 下面的命令是运行一个Ubuntu22.04和最新的pytorch与cuda
 docker run -p 9999:8888 --gpus all -it --name torch --hostname torch chinageology/pytorch-cuda:latest
 ```
 
@@ -654,9 +655,17 @@ docker load -i ailab-image.tar.gz
 
 ```bash
 docker run -p 8888:8888 --gpus all -it --name ailab --hostname ailab chinageology/ailab:latest
+docker run --gpus all -it --name torch --hostname torch chinageology/pytorch-cuda:latest
 ```
 
 这样，就成功地将一个运行中的 Docker 容器打包、压缩，并在另一台机器上导入并运行了。
+
+6. **做出修改后提交**：
+
+```bash
+docker tag torch chinageology/pytorch-cuda:latest
+docker push chinageology/pytorch-cuda:latest
+```
 
 #### 2.4.6 Docker 镜像和容器的删除
 
