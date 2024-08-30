@@ -1,5 +1,17 @@
 # 大数据技术
 
+## 0. 前言
+
+大数据技术是一个快速发展的领域，而市面上已有的一些以《大数据技术》之类为标题的教材中有大量作品的内容还囊括了很多大数据导论层次的基础知识性内容，应用性难以令人满意。另外，已有的相关教材也受制于编撰周期必然落后于技术现状等因素，即便包含了一部分技术相关的实践内容，也往往很难跟上最新的技术发展。大数据技术强调实践操作，而教材往往更注重理论知识的传授，这使得现存的若干教材实际上难以满足实践场景操作教学的需求。因此需要自行编写讲义。
+
+本课程作为本科阶段的进阶课程，重点强调的是实用性以及对前置课程的衔接有序。
+基本结构包括了虚拟化相关技术、容器及其编排系统、从分布式到超融合、从大数据到云计算这四个大的模块。其中，虚拟化和容器这两部分，是重要的基础部分。从之前《分布式与并行计算》以及《流数据处理技术》相关课程开始，我们就全程使用虚拟机+容器作为底层提供了课程基础环境，这一次随着内容进一步泛化，又加入了QEMU模拟器乃至虚拟化服务器等进阶体验。在前面这些章节的技术积累基础之上，从简单的分布式存储到现实开发中常被用到的超融合场景，蕴含了从课程理论内容到现实场景需求实践的信仰之跃。传统算力和数据存储作为一种服务，是数据存储和计算资源的重要载体，是数据处理和计算核心的载体。前期课程上的Hadoop+HDFS等等为代表的简单体验，一直让一些同学感觉过于简陋。这回课上加入了当前场景下较为常用于商用场景的开源超融合平台，让我们能够更直观、更直观、更直观地了解大数据的存储、计算、处理、应用等场景。云计算的引入，则让大数据技术从传统的单机、分布式、超融合等场景，进一步泛化到云原生、云服务、云平台等场景，提供了技术准备。通过这部分的学习，希望同学们可以根据实际开发过程中遇到的场景化需求，自行探索和搭建满足业务场景的云服务环境，为后续的开发工作做准备。
+
+上学期的课程结束后，咱们班上同学在自己机器上全面构建虚拟化环境的只有一半左右，有相当多的同学由于机器硬件配置和学校网络带宽等原因未能完成构建。考虑到相关的问题，本学期课程中，将提供虚拟机镜像和容器镜像，让同学们能够通过VirtualBox、QEMU模拟器等自行构建虚拟机环境，以方便同学们更好地学习和实践相关技术。由于学校出口带宽有限，大家在一些重度依赖网络并可能有高并发需求的场景会遇到一些潜在的问题，到时候咱们再想办法，逐步探索。
+
+本讲义的大部分内容实际上是各种虚拟镜像、容器打包文件等等难以直观展示的内容。简单的几十页文本和示例代码与截图，并不能让读者全面了解虚拟化技术的基本概念和原理，因此要求同学们一定要在课上全程跟随操作，并自行尝试和探索，才能更好地理解和掌握相关内容。
+
+
 ## 1. 虚拟化技术
 
 ### 1.1 虚拟化的定义和工作原理
@@ -146,9 +158,32 @@ qemu-system-x86_64 -hda /path/to/your/image/file
 默认用户名和密码都是hadoop，解压缩后文件夹应该如下图所示：
 ![](./images/qemu_folder.png)
 
+##### 图1 QEMU 文件夹结构图
+
+
 从终端进入到解压缩出来的路径：
 `cat run_ubuntu_arm64_tiny.bat`，然后复制文件内容来运行命令行版本；
 `cat run_ubuntu_arm64.bat`，然后复制文件内容来运行图形界面版本。
+
+QEMU 运行状态如下图所示：
+![](./images/QEMU-booting.png)
+
+##### 图2 QEMU 启动
+
+![](./images/QEMU-booted-cli.png)
+
+##### 图3 QEMU 运行命令界面的 Ubuntu 系统
+
+![](./images/QEMU-booted-gui.png)
+
+##### 图4 QEMU 运行图形界面的 Ubuntu 系统
+
+需要注意的是，硬件架构模拟可能会带来性能上的额外开销，因此运行时需要关注整体负载：
+![](./images/QEMU-CPU.png)
+
+##### 图5 QEMU 运行硬件模拟带来的性能影响
+
+
 
 #### 1.3.4 Ubuntu Server 上安装QEMU和libvirt
 
@@ -189,6 +224,13 @@ sudo systemctl enable cockpit
 
 在Cockpit中，可以点击左侧的"Virtual Machines"选项来管理虚拟机。可以创建新的虚拟机，或者管理已经存在的虚拟机。
 
+Ubuntu VM 运行状态如下图所示：
+![](./images/Ubuntu-VM.png)
+
+##### 图6 Ubuntu系统下使用Cockpit在WEB界面运行Windows虚拟机
+
+需要注意的是，由于虚拟化方案的不同，可能会导致虚拟机在运行时的性能差异。
+
 #### 1.3.5 VirtualBox
 
 有许多网站提供预构建的镜像文件，可以直接下载并使用。可以从Linux发行版的官方网站下载ISO文件，或者从网站如[OSBoxes](https://www.osboxes.org/)或[Vagrant Boxes](https://app.vagrantup.com/boxes/search)下载预构建的虚拟机镜像。
@@ -201,9 +243,13 @@ VirtualBox 的处理器和内存设置等等都已经很简单且很直观了。
 
 ![](./images/VirtualBox_CPU.png)
 
+##### 图7 VirtualBox CPU设置
+
 对于内存，一般需要设置为 8GB 以上，不过这需要宿主机至少有 16GB 以上的内存才行，否则可能会有很明显的卡顿。
 
 ![](./images/VirtualBox_RAM.png)
+
+##### 图8 VirtualBox RAM设置
 
 以Windows系统下的VirtualBox为例，半虚拟化接口有空、默认、旧的、最少、Hyper-V、KVM这几种，具体区别如下：
 
@@ -214,7 +260,9 @@ VirtualBox 的处理器和内存设置等等都已经很简单且很直观了。
 * Hyper-V: 这种模式下，VirtualBox会使用Windows的Hyper-V作为半虚拟化接口。这需要Windows 10或更高版本，并且已经启用了Hyper-V功能。
 * KVM: 这种模式下，VirtualBox会使用Linux的KVM作为半虚拟化接口。这需要Linux内核支持KVM，并且已经启用了KVM模块。
 
-![](./images/VirtualBox_SppedUp.png)
+![](./images/VirtualBox_SpeedUp.png)
+
+##### 图9 VirtualBox 的加速分类
 
 相比于 VMware Player 等其他竞品，VirtualBox有更细致的网络配置选项。
 
@@ -230,6 +278,8 @@ VirtualBox 的网络适配器类型有如下类型：
 * 未指定: 这表示没有选择任何网络模式。
 
 ![](./images/VirtualBox_Network.png)
+
+##### 图10 VirtualBox 的网络设置
 
 建议大家不要轻易使用桥接网络，因为这样会使得虚拟机和宿主机完全位于统一网段，不同的物理机上的虚拟机之间万一有物理地址或者ip地址的冲突就可能很麻烦了。
 
@@ -596,7 +646,11 @@ else:
     print("CUDA is not available. GPU support is not enabled.")
 ```
     
-如果输出为`True`，则说明CUDA已经成功安装。
+如下图所示，如果输出为`True`，则说明CUDA已经成功安装。
+
+![](./images/TorchGPU.png)
+
+##### 图11 Torch 的 GPU 支持
 
 这样，就在Ubuntu 24.04上从命令行创建了一个Ubuntu 24.04的Docker容器，并使用了宿主的NVIDIA GPU和CUDA，来运行PyTorch和CUDA。
 
@@ -671,7 +725,8 @@ docker push chinageology/pytorch-cuda:latest
 
 要删除本地的所有Docker容器和镜像，请按照以下步骤操作。请注意，这些操作将会删除所有容器和镜像，包括未使用的和正在运行的，因此请确保确实希望执行这些操作。
 
-###### 删除所有容器
+
+##### 删除所有容器
 
 首先，停止所有正在运行的容器：
 
@@ -685,7 +740,8 @@ docker stop $(docker ps -aq)
 docker rm $(docker ps -aq)
 ```
 
-###### 删除所有镜像
+
+##### 删除所有镜像
 
 删除所有Docker镜像：
 
@@ -693,7 +749,8 @@ docker rm $(docker ps -aq)
 docker rmi -f $(docker images -q)
 ```
 
-###### 注意
+
+##### 注意
 
 - 上述命令中使用的`$(docker ps -aq)`和`$(docker images -q)`分别用于获取所有容器的ID和所有镜像的ID。
 - 如果在尝试删除镜像时遇到错误，表示有容器仍在使用某些镜像。确保所有容器都已被删除后再次尝试。
@@ -724,8 +781,6 @@ docker rmi -f $(docker images -q)
 2. **选择合适的基础镜像**：找到一个包含 Ubuntu 24.04 和最新版 CUDA 的基础镜像。然而，由于 Ubuntu 24.04 是一个未来的版本（假设指的是一个新版本，因为截至我的知识更新日期，最新的 LTS 版本是 Ubuntu 22.04），可能还没有直接包含 CUDA 的官方镜像。因此，可能需要从一个包含最新 CUDA 的官方 NVIDIA 镜像开始，该镜像基于 Ubuntu 的最新 LTS 版本。
 
 3. **安装 PyTorch**：在容器内部，可以使用 PyTorch 官方提供的命令来安装最新版本的 PyTorch，确保安装的是支持 CUDA 的版本。
-
-
 
 
 以下是一个 Dockerfile 的示例，展示如何从 NVIDIA CUDA 的官方镜像开始构建，然后安装 PyTorch：
@@ -944,7 +999,7 @@ kubectl get pods
 
 超融合基础设施可以为构建和运行分布式系统提供基础设施。通过在HCI平台上运行分布式系统，可以更容易地扩展系统（只需添加更多的HCI节点），同时也可以更容易地管理和维护系统（因为所有的资源都在一个统一的平台上）。
 
-#### 一些超融合基础设施（HCI）平台：
+#### 一些超融合基础设施（HCI）平台
 
 1. **Proxmox VE (PVE)**：PVE是一个开源的虚拟化管理平台，提供了对KVM和容器的管理，以及集群功能。支持多种存储解决方案，并提供了一个用户友好的Web界面进行管理。然而，并不包含网络功能的集成。
 
@@ -1067,6 +1122,8 @@ qm destroy 100
 
 ![](./images/zerotier_web.png)
 
+##### 图12 Zeortier 的网络配置
+
 在Linux系统下首先使用下面的命令来安装客户端：
 ```Bash
 curl -s https://install.zerotier.com | sudo bash
@@ -1100,6 +1157,8 @@ sudo zerotier-cli leave 8056c2e21c000001
 
 ZeroTier 客户端还支持在 Windows、macOS 和 Android 系统上运行，并且可以与 Linux 系统上的客户端进行通信。
 ![](./images/zerotier_windows.png)
+
+##### 图13 Zeortier 在 Windows 下的使用
 
 
 ### 3.4 基于虚拟局域网的大数据系统
@@ -1356,6 +1415,26 @@ Seafile 是一个开源的企业文件同步和共享平台，也是Seafile 官�
 Seafile 提供了一个Web界面，用户可以在其中上传、下载、同步和共享文件。Seafile支持多种设备，包括PC、手机和平板，用户可以在任何设备上访问他们的文件。
 Seafile 的一个重要特性是它的文件版本控制，用户可以查看文件的历史版本，恢复到任何一个历史版本。这使得用户可以轻松地管理他们的文件，防止误删除或误修改。
 
+这部分的操作过程将参考官方最新版本的文档来实现，因此本文不再赘述。
+
+另外，Seafile 可以简单分为直接安装运行和Docker容器运行两种方案，请大家对比思考各自有何优劣？
+
 ### 4.5 实践探索
 
-结合前面所学的知识，实现 PVE + Ubuntu VM + Jupyter Server + Seafile 环境。
+结合前面所学的知识，利用课上提供的项目代码等相关资源，实现 PVE + Ubuntu VM + Jupyter Server + Seafile 环境。
+
+![](./images/PVE.png)
+
+##### 图14 PVE 下的虚拟机导入
+
+![](./images/Ubuntu-VM-Create.png)
+
+##### 图15 Ubuntu 下新建虚拟机
+
+![](./images/jupyterlab.webp)
+
+##### 图16 Jupyter 服务器的网络访问
+
+![](./images/Seafile.png)
+
+##### 图17基于 Seafile 实现的云存储
